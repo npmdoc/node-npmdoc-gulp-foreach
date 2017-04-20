@@ -1,0 +1,170 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/mariusGundersen/gulp-forEach"
+
+    >gulp-foreach (v0.1.0)</a>
+</h1>
+<h4>Send each file in a stream down its own stream</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.gulp-foreach">module gulp-foreach</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.gulp-foreach.gulp-foreach">
+            function <span class="apidocSignatureSpan"></span>gulp-foreach
+            <span class="apidocSignatureSpan">(func)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.gulp-foreach" id="apidoc.module.gulp-foreach">module gulp-foreach</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.gulp-foreach.gulp-foreach" id="apidoc.element.gulp-foreach.gulp-foreach">
+        function <span class="apidocSignatureSpan"></span>gulp-foreach
+        <span class="apidocSignatureSpan">(func)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">gulp-foreach = function (func) {
+
+  if (!func || typeof func != &#x27;function&#x27;) {
+    throw new gutil.PluginError(&#x27;gulp-forEach&#x27;, &#x27;`forEach` must be called with one parameter, a function&#x27;);
+  }
+
+  var openStreams = [];
+  var ended = false;
+  var error = false;
+
+
+  function closeStreamIfNoMoreOpenStreams(stream){
+    if(openStreams.length == 0){
+      if(ended &#x26;&#x26; !error){
+        stream.push(null);
+      }
+    }
+  }
+
+  return through.obj(function(data, enc, done){
+
+    if (data.isStream()) {
+      this.emit(&#x27;error&#x27;, new gutil.PluginError(&#x27;gulp-forEach&#x27;, &#x27;Streaming not supported&#x27;));
+      return;
+    }
+
+    var self = this;
+    var notYetRead = true;
+
+
+    var readStream = new Readable({objectMode: true});
+    readStream._read = function(){
+
+      if(notYetRead){
+        notYetRead = false;
+        readStream.push(data);
+      }else{
+        readStream.push(null);
+      }
+    };
+
+    var resultStream = func(readStream, data);
+
+    if(resultStream){
+
+      openStreams.push(resultStream);
+
+      resultStream.on(&#x27;end&#x27;, function(){
+        openStreams.splice(openStreams.indexOf(resultStream), 1);
+        closeStreamIfNoMoreOpenStreams(self);
+        done();
+      });
+
+      resultStream.on(&#x27;data&#x27;, function(result){
+        self.push(result);
+      });
+
+      resultStream.on(&#x27;error&#x27;, function(error){
+        console.error(&#x22;error!&#x22;);
+        done(error);
+      });
+
+    }else{
+      closeStreamIfNoMoreOpenStreams(self);
+    }
+
+  }, function(){
+    ended = true;
+    closeStreamIfNoMoreOpenStreams(this);
+  });
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
